@@ -18,6 +18,8 @@ var (
 // with the Docker API
 type APIClient struct {
 	NetworkType string
+	Version     string
+	Location    string
 	Host        string
 	Client      *http.Client
 }
@@ -26,6 +28,7 @@ type APIClient struct {
 func New(netType, host string) (c *APIClient, err error) {
 	c = &APIClient{
 		NetworkType: netType,
+		Version:     apiVersion,
 		Host:        host,
 	}
 
@@ -36,11 +39,13 @@ func New(netType, host string) (c *APIClient, err error) {
 func NewDefault() (c *APIClient, err error) {
 	c = &APIClient{
 		NetworkType: unixType,
+		Version:     apiVersion,
+		Location:    dockerSocket,
 		Host:        baseURL,
 		Client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-					return net.Dial("unix", dockerSocket)
+					return net.Dial(unixType, dockerSocket)
 				},
 				TLSHandshakeTimeout: 10 * time.Second,
 			},
