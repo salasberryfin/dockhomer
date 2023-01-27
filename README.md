@@ -10,8 +10,8 @@ It starts with creating processes within the Linux system isolated from the 'hos
 - **Mount**: mount points
 
 The following are the features I'm focusing on -for now-:
-[x] Running an interactive terminal - `/bin/bash`
-[ ] Passing a given command as argument - `echo "hello, world"`
-[ ] Run a program - `go run main.go`
-[ ] Use custom images - `dockhomer run nginx`
+- [x] Running an interactive terminal - `/bin/bash`
+- [ ] Passing a given command as argument - `echo "hello, world"`
+- [ ] Run a program - `go run main.go`
+- [ ] Use custom images - `dockhomer run nginx`
 
