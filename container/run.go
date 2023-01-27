@@ -16,8 +16,8 @@ func Interactive() {
 }
 
 // Run runs a command in a new container
-func Run(term string) {
-	cmd := exec.Command(term)
+func Run(term []string) {
+	cmd := exec.Command(term[0], term[1])
 	create(cmd)	// create new container
 	log.Printf("Running %s in the container\n", term)
 	if err := cmd.Run(); err != nil {
