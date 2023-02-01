@@ -26,7 +26,7 @@ func init() {
 	}
 }
 
-// namespaceConf is used by reexec for namespace intialization, including:
+// namespaceConf is used by reexec for namespace initialization, including
 // pivot_root to define the container root filesystem
 func namespaceConf() {
 	newRootFs := os.Args[1]
