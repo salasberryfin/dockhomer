@@ -12,9 +12,9 @@ func main() {
 	switch action {
 	case "run":
 		if command == "shell" {
-			container.Interactive()
+			container.RunShell()
 		} else {
-			container.Run([]string{os.Args[2], os.Args[3]})
+			container.Run(os.Args[2:])
 		}
 	default:
 		log.Fatalf("No valid command found\n")
