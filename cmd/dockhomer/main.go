@@ -11,15 +11,13 @@ func main() {
 	action, command := os.Args[1], os.Args[2]
 	switch action {
 	case "run":
-		id, err := container.Create()
-		if err != nil {
-			log.Fatalf("Failed to create container: %s\n", err)
-		}
+		cont := container.New("/tmp/dockhomer")
+		log.Printf("Creating container with id: %d\n", cont.ID)
 		if command == "shell" {
-			log.Printf("An interactive shell will be open for container %d\n", id)
-			//container.RunShell()
+			//container.New("/tmp/dockhomer/")
+			cont.OpenShell()
 		} else {
-			container.Run(os.Args[2:])
+			container.Run()
 		}
 	default:
 		log.Fatalf("No valid command found\n")

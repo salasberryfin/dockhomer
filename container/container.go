@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -14,42 +13,21 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 )
 
-const (
-	dockhomerHome    = "/tmp/dockhomer"
-	dockhomerVolumes = dockhomerHome + "/volumes"
-)
+type Container struct {
+	ProcAttr syscall.SysProcAttr
+	ID       int
+	Root     string
+	Stdin    *os.File
+	Stdout   *os.File
+	Stderr   *os.File
+}
 
 func init() {
-	reexec.Register("namespaceConf", namespaceConf)
+	reexec.Register("shell", RunShell)
+	reexec.Register("command", Run)
 	if reexec.Init() {
 		os.Exit(0)
 	}
-}
-
-// namespaceConf is used by reexec for namespace initialization, including
-// pivot_root to define the container root filesystem
-func namespaceConf() {
-	newRootFs := os.Args[1]
-	target := filepath.Join(newRootFs, "proc")
-
-	if _, err := os.Stat(target); os.IsNotExist(err) {
-		log.Printf("%s does not exist, creating...\n", target)
-		if err := createDirs([]string{target}, fs.FileMode(0755)); err != nil {
-			log.Fatalf("Failed to create directory: %s\n", err)
-			os.Exit(1)
-		}
-	}
-	log.Printf("Mounting %s\n", target)
-	if err := syscall.Mount("proc", target, "proc", 0, ""); err != nil {
-		log.Fatalf("Failed to mount %s: %s\n", target, err)
-		os.Exit(1)
-	}
-
-	if err := pivotRoot(newRootFs, "oldFs"); err != nil {
-		log.Fatal("Failed to pivot_root: %s\n", err)
-		os.Exit(1)
-	}
-	RunShell()
 }
 
 // generateID creates a random identifier
@@ -65,51 +43,58 @@ func generateID() int {
 	return id
 }
 
-// Create configures the namespaces for a new container
-func Create() (int, error) {
-	containerID := generateID()
-	log.Printf("Starting a new container %d\n", containerID)
-
-	cmd := reexec.Command("namespaceConf", dockhomerHome)
-
+func (c *Container) OpenShell() error {
+	cmd := reexec.Command("shell", strconv.Itoa(c.ID))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS |
-			syscall.CLONE_NEWPID |
-			syscall.CLONE_NEWUSER |
-			syscall.CLONE_NEWNS,
-		UidMappings: []syscall.SysProcIDMap{
-			{
-				ContainerID: 0,
-				HostID:      os.Getuid(),
-				Size:        1,
-			},
-		},
-		GidMappings: []syscall.SysProcIDMap{
-			{
-				ContainerID: 0,
-				HostID:      os.Getgid(),
-				Size:        1,
-			},
-		},
-		Credential: &syscall.Credential{
-			Uid: 0,
-			Gid: 0,
-		},
-	}
+	cmd.SysProcAttr = &c.ProcAttr
 
 	if err := cmd.Start(); err != nil {
-		log.Printf("Failed to initialize container namespace\n")
-		os.Exit(1)
+		log.Fatalf("Failed to initialize container namespace: %v\n", err)
+		return err
 	}
 	if err := cmd.Wait(); err != nil {
-		log.Printf("Failed to start container\n")
-		os.Exit(1)
+		log.Fatalf("Failed to start container: %v\n", err)
+		return err
 	}
 
-	return containerID, nil
+	return nil
+}
+
+// New creates a new instance of a container
+func New(root string) *Container {
+	return &Container{
+		ProcAttr: syscall.SysProcAttr{
+			Cloneflags: syscall.CLONE_NEWUTS |
+				syscall.CLONE_NEWPID |
+				syscall.CLONE_NEWUSER |
+				syscall.CLONE_NEWNS,
+			UidMappings: []syscall.SysProcIDMap{
+				{
+					ContainerID: 0,
+					HostID:      os.Getuid(),
+					Size:        1,
+				},
+			},
+			GidMappings: []syscall.SysProcIDMap{
+				{
+					ContainerID: 0,
+					HostID:      os.Getgid(),
+					Size:        1,
+				},
+			},
+			Credential: &syscall.Credential{
+				Uid: 0,
+				Gid: 0,
+			},
+		},
+		ID:     generateID(),
+		Root:   root,
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
 }
 
 // createDirs ships the container with the required directories
