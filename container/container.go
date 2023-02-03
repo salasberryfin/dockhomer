@@ -43,11 +43,34 @@ func generateID() int {
 	return id
 }
 
+// OpenShell opens an interactive shell in the container
 func (c *Container) OpenShell() error {
 	cmd := reexec.Command("shell", strconv.Itoa(c.ID))
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdin = c.Stdin
+	cmd.Stdout = c.Stdout
+	cmd.Stderr = c.Stderr
+	cmd.SysProcAttr = &c.ProcAttr
+
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("Failed to initialize container namespace: %v\n", err)
+		return err
+	}
+	if err := cmd.Wait(); err != nil {
+		log.Fatalf("Failed to start container: %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
+// RunCmd runs the command passed as CLI argument in the container
+func (c *Container) RunCmd(args ...string) error {
+	newArgs := []string{"command"}
+	newArgs = append(newArgs, args...)
+	cmd := reexec.Command(newArgs...)
+	cmd.Stdin = c.Stdin
+	cmd.Stdout = c.Stdout
+	cmd.Stderr = c.Stderr
 	cmd.SysProcAttr = &c.ProcAttr
 
 	if err := cmd.Start(); err != nil {

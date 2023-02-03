@@ -14,10 +14,9 @@ func main() {
 		cont := container.New("/tmp/dockhomer")
 		log.Printf("Creating container with id: %d\n", cont.ID)
 		if command == "shell" {
-			//container.New("/tmp/dockhomer/")
 			cont.OpenShell()
 		} else {
-			container.Run()
+			cont.RunCmd(os.Args[2:]...)
 		}
 	default:
 		log.Fatalf("No valid command found\n")
