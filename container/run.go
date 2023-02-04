@@ -33,9 +33,10 @@ func RunShell() {
 
 // Run runs a command in a new container
 func Run() {
-	term := os.Args[1:]
+	hostname := os.Args[1]
+	term := os.Args[2:]
 
-	err := newFilesystem(dockhomerHome, "hello")
+	err := newFilesystem(dockhomerHome, hostname)
 	if err != nil {
 		log.Fatalf("Failed to build file system: %v\n", err)
 	}

@@ -11,11 +11,13 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/salasberryfin/dockhomer/network"
 )
 
 type Container struct {
 	ProcAttr syscall.SysProcAttr
 	ID       int
+	Image    string
 	Root     string
 	Stdin    *os.File
 	Stdout   *os.File
@@ -65,7 +67,7 @@ func (c *Container) OpenShell() error {
 
 // RunCmd runs the command passed as CLI argument in the container
 func (c *Container) RunCmd(args ...string) error {
-	newArgs := []string{"command"}
+	newArgs := []string{"command", strconv.Itoa(c.ID)}
 	newArgs = append(newArgs, args...)
 	cmd := reexec.Command(newArgs...)
 	cmd.Stdin = c.Stdin
@@ -86,13 +88,18 @@ func (c *Container) RunCmd(args ...string) error {
 }
 
 // New creates a new instance of a container
-func New(root string) *Container {
+func New(image, root string) *Container {
+
+	// network configuration test
+	network.NewVethPair("vethdockhomer0")
+
 	return &Container{
 		ProcAttr: syscall.SysProcAttr{
 			Cloneflags: syscall.CLONE_NEWUTS |
 				syscall.CLONE_NEWPID |
 				syscall.CLONE_NEWUSER |
-				syscall.CLONE_NEWNS,
+				syscall.CLONE_NEWNS |
+				syscall.CLONE_NEWNET,
 			UidMappings: []syscall.SysProcIDMap{
 				{
 					ContainerID: 0,
