@@ -3,14 +3,18 @@ package network
 import (
 	"log"
 	"net"
+
+	"github.com/vishvananda/netlink"
 )
 
 // NewBridge creates a new bridge device in the host machine
 func NewBridge(name string) {
-	//link := &netlink.Bridge{
-	//	netlink.LinkAttrs{Name: name},
-	//}
-	log.Printf("Creating network bridge %v\n", name)
+	linkAttributes := netlink.NewLinkAttrs()
+	linkAttributes.Name = name
+	link := &netlink.Bridge{
+		LinkAttrs: linkAttributes,
+	}
+	log.Printf("Creating network bridge %v\n", link)
 }
 
 // NewVethPair creates a veth interface pair for establishing connection between
