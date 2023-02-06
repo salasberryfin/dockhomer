@@ -22,6 +22,12 @@ type Container struct {
 	Stderr   *os.File
 }
 
+const (
+	dockhomerRoot           = "/tmp/dockhomer"
+	dockhomerImagesRoot     = dockhomerRoot + "/images"
+	dockhomerContainersRoot = dockhomerRoot + "/containers"
+)
+
 func init() {
 	reexec.Register("shell", RunShell)
 	reexec.Register("command", Run)
@@ -85,12 +91,19 @@ func (c *Container) RunCmd(args ...string) error {
 	return nil
 }
 
+// Inspect retrieves information about the given container
+func (c *Container) Inspect() {}
+
+// ListContainers shows the list of existing containers in the host
+func ListContainers() {}
+
 // New creates a new instance of a container
 func New(image, root string) *Container {
 	// network configuration test
 	//network.NewBridge("dockhomer-bridge")
 	//network.NewVethPair("vethdockhomer0")
-	_, err := ListImages()
+
+	_, err := pullImage(image, false)
 	if err != nil {
 		log.Fatalf("Failed to list existing images: %v\n", err)
 	}
