@@ -3,7 +3,7 @@ module github.com/salasberryfin/dockhomer
 go 1.19
 
 require (
-	github.com/docker/docker v20.10.23+incompatible
+	github.com/docker/docker v23.0.0+incompatible
 	github.com/vishvananda/netlink v1.1.0
 )
 

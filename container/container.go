@@ -2,7 +2,6 @@ package container
 
 import (
 	"fmt"
-	"io/fs"
 	"log"
 	"math/rand"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/reexec"
-	"github.com/salasberryfin/dockhomer/network"
 )
 
 type Container struct {
@@ -89,9 +87,13 @@ func (c *Container) RunCmd(args ...string) error {
 
 // New creates a new instance of a container
 func New(image, root string) *Container {
-
 	// network configuration test
-	network.NewVethPair("vethdockhomer0")
+	//network.NewBridge("dockhomer-bridge")
+	//network.NewVethPair("vethdockhomer0")
+	_, err := ListImages()
+	if err != nil {
+		log.Fatalf("Failed to list existing images: %v\n", err)
+	}
 
 	return &Container{
 		ProcAttr: syscall.SysProcAttr{
@@ -125,19 +127,4 @@ func New(image, root string) *Container {
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
-}
-
-// createDirs ships the container with the required directories
-// it defaults to using a temporary folder ./volumes for any container dir
-func createDirs(dirs []string, perm fs.FileMode) error {
-	for _, dir := range dirs {
-		//dirPath := filepath.Join(dockhomerVolumes, dir)
-		log.Printf("Container directories will be created in %s\n", dir)
-		err := os.MkdirAll(dir, perm)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

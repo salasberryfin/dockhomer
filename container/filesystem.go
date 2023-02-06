@@ -8,6 +8,56 @@ import (
 	"syscall"
 )
 
+// Image holds basic information about existing filesystems stored in the host machine
+type Image struct {
+	Name string
+	Path string
+}
+
+const (
+	dockhomerRoot           = "/tmp/dockhomer"
+	dockhomerImagesRoot     = dockhomerRoot + "/images"
+	dockhomerContainersRoot = dockhomerRoot + "/containers"
+)
+
+// ListImages retrieves the existing images in the host machine
+func ListImages() ([]Image, error) {
+	if _, err := os.Stat(dockhomerImagesRoot); err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("%s does not exists, creating...\n", dockhomerImagesRoot)
+			err := createDirs([]string{dockhomerImagesRoot}, fs.FileMode(0755))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	entries, err := os.ReadDir(dockhomerImagesRoot)
+	if err != nil {
+		return nil, err
+	}
+	images := make([]Image, 0, len(entries))
+	for _, entry := range entries {
+		image := Image{
+			Name: entry.Name(),
+			Path: filepath.Join(dockhomerImagesRoot, entry.Name()),
+		}
+		images = append(images, image)
+	}
+
+	log.Printf("Images:\n%v\n", images)
+
+	return images, nil
+}
+
+// pullImage checks if the image exists in the default image folder
+// the current behavior is to use a hardcoded `./volumes` folder in the project
+// root in which image filesystems should be stored
+// pending a better implementation
+func pullImage(name string) error {
+
+	return nil
+}
+
 // newFileSystem mounts all the required directories to create an isolated
 // file system for the new container. This allows using different system images
 func newFilesystem(newRootFs, hostname string) error {
@@ -80,6 +130,20 @@ func mountFileSystem() error {
 // unmountFileSystem uses syscall.unmount the file system to the
 // unmount namespace of the container
 func unmountFileSystem() error {
+
+	return nil
+}
+
+// createDirs ships the container with the required directories
+// it defaults to using a temporary folder ./volumes for any container dir
+func createDirs(dirs []string, perm fs.FileMode) error {
+	for _, dir := range dirs {
+		log.Printf("Directories will be created in %s\n", dir)
+		err := os.MkdirAll(dir, perm)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
